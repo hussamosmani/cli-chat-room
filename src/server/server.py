@@ -1,15 +1,15 @@
 import socket
 
+from src.config import FAMILY, HOST, PORT, TYPE
+
 
 def create_socket_server():
 
     print("Server connecting .....")
 
-    res_list = socket.getaddrinfo(
-        host=None, port="80", family=socket.AF_INET, type=socket.SOCK_STREAM
-    )
+    res_list = socket.getaddrinfo(host=HOST, port=PORT, family=FAMILY, type=TYPE)
     _, _, _, _, sockaddr = res_list[0]
-    server_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+    server_socket = socket.socket(family=FAMILY, type=TYPE)
     server_socket.bind(sockaddr)
 
     server_socket.listen(10)
