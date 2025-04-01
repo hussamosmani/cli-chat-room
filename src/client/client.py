@@ -20,7 +20,14 @@ def user_request(sock: socket.socket):
     client_socket.send(user_message.encode())
 
 
+def create_user_name(sock: socket.socket):
+    print("Please enter a user name")
+    user_message = input("User: ")
+    client_socket.send(user_message.encode())
+
+
 if __name__ == "__main__":
     client_socket = create_socket_client()
+    create_user_name(sock=socket)
     print("Please choose between three options: @name, @chatroom ")
     user_request(sock=client_socket)
