@@ -15,19 +15,21 @@ def create_socket_client():
     return s
 
 
-def user_request(sock: socket.socket):
-    user_message = input("User: ")
-    client_socket.send(user_message.encode())
-
-
-def create_user_name(sock: socket.socket):
+def create_user_name(client_socket: socket.socket):
     print("Please enter a user name")
     user_message = input("User: ")
     client_socket.send(user_message.encode())
+    return user_message
 
 
 if __name__ == "__main__":
     client_socket = create_socket_client()
-    create_user_name(sock=socket)
-    print("Please choose between three options: @name, @chatroom ")
-    user_request(sock=client_socket)
+    user_name = create_user_name(client_socket=client_socket)
+
+    while True:
+        print("Please choose between three options: @name, @chatroom ")
+
+        user_message = input(f"{user_name}: ")
+        client_socket.send(user_message.encode())
+
+        print(client_socket.recv(1024).decode())
