@@ -2,6 +2,9 @@ import socket
 
 from src.config import FAMILY, HOST, PORT, TYPE
 
+connections = {}
+name_to_addr = {}
+
 
 def create_socket_server():
 
@@ -12,7 +15,7 @@ def create_socket_server():
     server_socket = socket.socket(family=FAMILY, type=TYPE)
     server_socket.bind(sockaddr)
 
-    server_socket.listen(10)
+    server_socket.listen(2)
 
     print("Server created .....")
     print(f"Server address binded to {sockaddr} .....")
@@ -20,11 +23,25 @@ def create_socket_server():
     return server_socket
 
 
-def process_request(server_socket: socket.socket):
+def intialise_client(connection: socket.socket, client_addr):
+    connections[client_addr] = connection
+    print("Socket established")
+    user_name = connection.recv(1024)
+    name_to_addr[user_name] = client_addr
 
-    print("Requests processing .....")
-    server_socket.accept()
+
+def handle_client(connection: socket.socket, client_addr):
+    print("Request accepted from ", client_addr)
+    if client_addr not in connections:
+        intialise_client(connection=connection, client_addr=client_addr)
 
 
 if __name__ == "__main__":
     server_socket = create_socket_server()
+
+    while True:
+        print("Accepting requests .....")
+        conn, client_addr = server_socket.accept()
+
+        print(f"Accepted connection from {client_addr}")
+        handle_client(connection=conn, client_addr=client_addr)
