@@ -48,7 +48,8 @@ def handle_client(connection: socket.socket):
     reciever_name = data_tokens[0][1:]
     reciever_addr = name_to_addr[reciever_name]
     reciever_socket = connections[reciever_addr]
-    reciever_msg = " ".join(data_tokens[1:])
+    reciever_msg = f"Incoming: " + " ".join(data_tokens[1:])
+    print("reciever_msg: ", reciever_msg)
     reciever_socket.send(reciever_msg.encode())
 
 

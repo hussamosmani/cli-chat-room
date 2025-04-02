@@ -1,6 +1,14 @@
 import socket
+import sys
+import threading
+import time
+
+import readchar
+
 
 from src.config import FAMILY, HOST, PORT, TYPE
+
+input_buffer = []
 
 
 def create_socket_client():
@@ -22,14 +30,41 @@ def create_user_name(client_socket: socket.socket):
     return user_message
 
 
+def print_to_cli(client_socket: socket.socket, user_name: str):
+    while True:
+        message = client_socket.recv(1024).decode()
+        sys.stdout.write("\r\033[K")
+        sys.stdout.write(f"{message}\n")
+        sys.stdout.write(f"{user_name}: {''.join(input_buffer)}")
+        sys.stdout.flush()
+        input_buffer.clear()
+
+
 if __name__ == "__main__":
     client_socket = create_socket_client()
     user_name = create_user_name(client_socket=client_socket)
 
+    thread = threading.Thread(target=print_to_cli, args=(client_socket, user_name))
+    thread.daemon = True
+    thread.start()
+    print("\nPlease choose between three options: @name, @chatroom ")
+
     while True:
-        print("Please choose between three options: @name, @chatroom ")
+        sys.stdout.write(f"\n{user_name}: ")
+        sys.stdout.flush()
+        while True:
+            key = readchar.readkey()
 
-        user_message = input(f"{user_name}: ")
-        client_socket.send(user_message.encode())
+            if key in ("\x08", "\x7f"):
+                input_buffer.pop()
+                sys.stdout.write("\b \b")
+                sys.stdout.flush()
+            elif key == "\r":
+                break
+            else:
+                input_buffer.append(key)
+                sys.stdout.write(key)
+                sys.stdout.flush()
 
-        print(client_socket.recv(1024).decode())
+        client_socket.send("".join(input_buffer).encode())
+        input_buffer.clear()
