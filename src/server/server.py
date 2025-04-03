@@ -55,6 +55,19 @@ def handle_client(connection: socket.socket):
         connection.send(response.encode())
         return
 
+    if data_tokens[0] == "@all":
+        sender_name = socket_to_name.get(connection, "Unknown")
+        message_body = " ".join(data_tokens[1:])
+        broadcast_msg = f"{sender_name}: {message_body}"
+
+        for sock, name in socket_to_name.items():
+            if sock != connection:  # Don't send back to the sender
+                try:
+                    sock.send(broadcast_msg.encode())
+                except Exception as e:
+                    print(f"Failed to send to {name}: {e}")
+        return
+
     target_name = data_tokens[0][1:]
     if target_name not in name_to_addr:
         connection.send(b"[ERROR] Target user not found")
