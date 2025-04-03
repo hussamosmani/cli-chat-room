@@ -47,7 +47,7 @@ if __name__ == "__main__":
     thread = threading.Thread(target=print_to_cli, args=(client_socket, user_name))
     thread.daemon = True
     thread.start()
-    print("\nPlease choose between three options: @name, @chatroom ")
+    print("Please choose between three options: @name, @chatroom ")
 
     while True:
         sys.stdout.write(f"\n{user_name}: ")
@@ -56,9 +56,10 @@ if __name__ == "__main__":
             key = readchar.readkey()
 
             if key in ("\x08", "\x7f"):
-                input_buffer.pop()
-                sys.stdout.write("\b \b")
-                sys.stdout.flush()
+                if input_buffer:
+                    input_buffer.pop()
+                    sys.stdout.write("\b \b")
+                    sys.stdout.flush()
             elif key == "\r":
                 break
             else:

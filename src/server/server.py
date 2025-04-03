@@ -1,12 +1,12 @@
 import socket
 import select
-import time
 from typing import Dict, Tuple
 
 from src.config import FAMILY, HOST, PORT, TYPE
 
 connections: Dict[Tuple[str, int], socket.socket] = {}
 name_to_addr: Dict[str, Tuple[str, int]] = {}
+socket_to_name: Dict[socket.socket, str] = {}
 
 
 def create_socket_server():
@@ -18,7 +18,7 @@ def create_socket_server():
     server_socket = socket.socket(family=FAMILY, type=TYPE)
     server_socket.bind(sockaddr)
 
-    server_socket.listen(2)
+    server_socket.listen()
 
     connections[sockaddr] = server_socket
 
@@ -29,27 +29,45 @@ def create_socket_server():
 
 
 def intialise_client(connection: socket.socket, client_addr):
-    connections[client_addr] = connection
     user_name = connection.recv(1024).decode()
+    connections[client_addr] = connection
     name_to_addr[user_name] = client_addr
+    socket_to_name[connection] = user_name
     print(f"Socket Created for {user_name}, {client_addr}")
 
 
 def handle_client(connection: socket.socket):
     data = connection.recv(1024).decode()
     data_tokens = data.split()
+
+    if not data_tokens:
+        return  # handle empty message
+
     if data_tokens[0][0] != "@":
-        connection.send("[ERROR] Missing @ ")
-        return
-    if data_tokens[0][1:] not in name_to_addr:
-        connection.send("[ERROR] Target user not found")
+        connection.send(b"[ERROR] Missing @ ")
         return
 
-    reciever_name = data_tokens[0][1:]
-    reciever_addr = name_to_addr[reciever_name]
+    if data_tokens[0] == "@people":
+        people = [name for sock, name in socket_to_name.items() if sock != connection]
+        response = (
+            "Online: " + ",".join(people) if people else "No other users connected"
+        )
+        connection.send(response.encode())
+        return
+
+    target_name = data_tokens[0][1:]
+    if target_name not in name_to_addr:
+        connection.send(b"[ERROR] Target user not found")
+        return
+
+    sender_name = socket_to_name.get(connection, "Unknown")  # 👈 Get sender name
+    message_body = " ".join(data_tokens[1:])
+    reciever_msg = f"{sender_name}: {message_body}"  # 👈 Include sender name
+
+    reciever_addr = name_to_addr[target_name]
     reciever_socket = connections[reciever_addr]
-    reciever_msg = f"Incoming: " + " ".join(data_tokens[1:])
-    print("reciever_msg: ", reciever_msg)
+
+    print("reciever_msg:", reciever_msg)
     reciever_socket.send(reciever_msg.encode())
 
 
