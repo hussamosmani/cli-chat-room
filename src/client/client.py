@@ -31,13 +31,20 @@ def create_user_name(client_socket: socket.socket):
 
 
 def print_to_cli(client_socket: socket.socket, user_name: str):
-    while True:
+    try:
         message = client_socket.recv(1024).decode()
+        if not message:
+            return  # Server likely closed connection
         sys.stdout.write("\r\033[K")
         sys.stdout.write(f"{message}\n")
         sys.stdout.write(f"{user_name}: {''.join(input_buffer)}")
         sys.stdout.flush()
         input_buffer.clear()
+    except (ConnectionAbortedError, ConnectionResetError):
+        return
+    except Exception as e:
+        print(f"\n[ERROR in print_to_cli]: {e}")
+        return
 
 
 if __name__ == "__main__":
@@ -66,6 +73,12 @@ if __name__ == "__main__":
                 input_buffer.append(key)
                 sys.stdout.write(key)
                 sys.stdout.flush()
+
+        if "".join(input_buffer) == "@exit":
+            print("\nExiting chat... Goodbye!")
+            client_socket.close()
+            thread.join()
+            sys.exit()
 
         client_socket.send("".join(input_buffer).encode())
         input_buffer.clear()

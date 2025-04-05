@@ -84,6 +84,31 @@ def handle_client(connection: socket.socket):
     reciever_socket.send(reciever_msg.encode())
 
 
+def disconnect_client(sock: socket.socket):
+    user_name = socket_to_name.get(sock, "<unknown>")
+    print(f"Disconnecting client: {user_name}")
+
+    # Remove from socket_to_name
+    socket_to_name.pop(sock, None)
+
+    # Remove from name_to_addr
+    for name, addr in list(name_to_addr.items()):
+        if connections.get(addr) == sock:
+            name_to_addr.pop(name, None)
+            break
+
+    # Remove from connections
+    for addr, s in list(connections.items()):
+        if s == sock:
+            connections.pop(addr, None)
+            break
+
+    try:
+        sock.close()
+    except Exception as e:
+        print(f"[ERROR] Closing socket failed: {e}")
+
+
 if __name__ == "__main__":
     server_socket = create_socket_server()
 
@@ -91,15 +116,20 @@ if __name__ == "__main__":
         connections_arr = list(connections.values())
 
         readable, writable, _ = select.select(connections_arr, [], [])
+        try:
 
-        for sock in readable:
-            if sock == server_socket:
-                conn, client_addr = server_socket.accept()
+            for sock in readable:
+                if sock == server_socket:
+                    conn, client_addr = server_socket.accept()
 
-                intialise_client(connection=conn, client_addr=client_addr)
-            else:
-                handle_client(
-                    connection=sock,
-                )
+                    intialise_client(connection=conn, client_addr=client_addr)
+                else:
+                    handle_client(
+                        connection=sock,
+                    )
 
-        print(readable)
+            print(readable)
+        except Exception as e:
+            print(f"[SERVER LOOP ERROR] {e}")
+            if sock != server_socket:
+                disconnect_client(sock)
