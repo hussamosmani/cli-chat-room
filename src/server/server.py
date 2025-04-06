@@ -128,7 +128,6 @@ if __name__ == "__main__":
                         connection=sock,
                     )
 
-            print(readable)
         except Exception as e:
             print(f"[SERVER LOOP ERROR] {e}")
             if sock != server_socket:
